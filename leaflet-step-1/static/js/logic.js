@@ -58,35 +58,6 @@ function CircleMaker(features, latlng){
   // Send our earthquakes layer to the createMap function/
   createMap(earthquakes);
 }
-  // Create Legend
-  var legend = L.control({
-    position: "bottomright"
-  });
-
-  // Legend Details
-  legend.onAdd = function() {
-    var div = L.DomUtil.create("div", "info legend");
-
-    var grades = [0, 1, 2, 3, 4, 5];
-    var colors = [
-      "#98ee00",
-      "#98ee00",
-      "#98ee00",
-      "#98ee00",
-      "#98ee00",
-      "#98ee00"
-    ];
-
-    // Loop through
-    for (var i = 0; i < grades.length; i++) {
-      div.innerHTML +=
-      "<i style='background: " + colors[i] + "'></i> " + grades[i] + (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
-    }
-    return div;
-  };
-
-  legend.addTo(myMap);
-
 function createMap(earthquakes) {
 
   // Create the base layers.
