@@ -1,70 +1,56 @@
-
-
-// Store our API endpoint as queryUrl.
+// Create a variable for the query url
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 
-// Perform a GET request to the query URL/
+// Connect to the query url using D3 & create the data features
 d3.json(queryUrl).then(function (data) {
-  // Once we get a response, send the data.features object to the createFeatures function.
   createFeatures(data.features);
 });
 
 function createFeatures(earthquakeData) {
 
-  // Define a function that we want to run once for each feature in the features array.
-  // Give each feature a popup that describes the place and time of the earthquake.
+  // Create a function to determine the size & colour of each marker on the map, depending on the magnitude & depth of the earthquake
+  function getRadius(mag) {
+    return mag * 2.5
+  }
+  function getColor(feature){
+    let depth = feature.geometry.coordinates[2];
+    let colour = "#B7DF5F";
+    if      ( depth > 90) { colour = "#ED4311" }
+    else if ( depth > 70) { colour = "#ED7211" }
+    else if ( depth > 50) { colour = "#EDB411" }
+    else if ( depth > 30) { colour = "#EDD911" }
+    else if ( depth > 10) { colour = "#DCED11" }
+    return(colour)
+  }
+
+  // Create a function to plot a circle for each feature in the json
   function onEachFeature(feature, layer) {
-    layer.bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`);
+    layer.bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}<br>Magnitude: ${(feature.properties.mag)}<br>Depth: ${(feature.geometry.coordinates[2])}</p>`);
+  }
+  function pointToLayer (feature, latlng) {
+    return new L.CircleMarker ( latlng, {
+      radius: getRadius(feature.properties.mag),
+      color: 'grey',
+      fillColor: getColor(feature),
+      fillOpacity: 0.5,
+      weight: 1
+    });
   }
 
-// Function for Circle Color Base on Criteria. The Color Scale is base of the 7 colors of a Rainboy ROY G BIV
-function QuakeColor(Qcolor) {
-  switch(true) {
-      case (Qcolor < 1):
-        return "#B7DF5F";
-      case (Qcolor < 2):
-          return "#DCED11";
-      case (Qcolor < 3):
-        return "#EDD911";
-      case (Qcolor < 4):
-          return "#EDB411";
-      case (Qcolor < 5):
-          return "#ED721";
-      default:
-        return "#ED4311";
-  }
-}
-//   Create a circle function
-function CircleMaker(features, latlng){
-  var CircleOptions = {
-      radius: features.properties.mag * 5,
-      fillColor: QuakeColor(features.properties.mag),
-      color: QuakeColor(features.properties.mag),
-      weight: 1.0,
-      opacity: 1.0,
-      fillOpacity: .5
-
-  }
-  return L.circleMarker(latlng, CircleOptions)
-}
-
-  // Create a GeoJSON layer that contains the features array on the earthquakeData object.
-  // Run the onEachFeature function once for each piece of data in the array.
+  // Create the overlay for the newly created earthquake data plots & send to the map
   var earthquakes = L.geoJSON(earthquakeData, {
-    onEachFeature: onEachFeature,
-    pointToLayer: CircleMaker
+    pointToLayer : pointToLayer,
+    onEachFeature: onEachFeature
   });
 
-  // Send our earthquakes layer to the createMap function/
   createMap(earthquakes);
 }
-function createMap(earthquakes) {
 
+function createMap(earthquakes) {
   // Create the base layers.
   var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   })
-
   var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
   });
@@ -80,20 +66,32 @@ function createMap(earthquakes) {
     Earthquakes: earthquakes
   };
 
-  // Create our map, giving it the streetmap and earthquakes layers to display on load.
+  // Create our map, giving it the streetmap & earthquakes layers to display on load.
   var myMap = L.map("map", {
-    center: [
-      37.09, -95.71
-    ],
-    zoom: 5,
+    center: [ 37.09, -95.71 ],
+    zoom: 4,
     layers: [street, earthquakes]
   });
 
   // Create a layer control.
-  // Pass it our baseMaps and overlayMaps.
+  // Pass it our baseMaps & overlayMaps.
   // Add the layer control to the map.
   L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
   }).addTo(myMap);
-
+  
+  // Legend for the map
+  var legend = L.control({ position: "bottomright" });
+  legend.onAdd = function (map) {
+    var div = L.DomUtil.create("div", "legend");
+    div.innerHTML += "<b>Depth</b><br>";
+    div.innerHTML += '<i style="background: #B7DF5F"></i><span>&lt;10</span><br>';
+    div.innerHTML += '<i style="background: #DCED11"></i><span>10-30</span><br>';
+    div.innerHTML += '<i style="background: #EDD911"></i><span>30-50</span><br>';
+    div.innerHTML += '<i style="background: #EDB411"></i><span>50-70</span><br>';
+    div.innerHTML += '<i style="background: #ED7211"></i><span>70-90</span><br>';
+    div.innerHTML += '<i style="background: #ED4311"></i><span>&gt;90</span><br>';
+    return div;
+  };
+  legend.addTo(myMap);
 }
