@@ -9,4 +9,5 @@ The challenge creates the following visualisations using javascript & leaflet:
  - Controls to remove layers & change map style
 
 Task 1 can be accessed [here](https://j-fairgrieve.github.io/leaflet-challenge/leaflet-step-1/index.html)
+
 Task 2 can be accessed [here](https://j-fairgrieve.github.io/leaflet-challenge/leaflet-step-2/index.html)
